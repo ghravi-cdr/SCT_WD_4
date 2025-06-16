@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do List</title>
+  <style>
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f9ff;
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2a52be;
+      margin-bottom: 20px;
+    }
+
+    .list-name input {
+      width: 70%;
+      padding: 10px;
+      border: 2px solid #2a52be;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+
+    .list-name button {
+      padding: 10px 15px;
+      background-color: #2a52be;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .lists-container {
+      margin-top: 30px;
+    }
+
+    .task-list {
+      background: white;
+      border: 2px solid #2a52be;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .task-list h2 {
+      color: #2a52be;
+      margin-bottom: 10px;
+    }
+
+    .task-form input,
+    .task-form select {
+      padding: 8px;
+      margin: 5px;
+      width: calc(100% - 22px);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .task-form button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #f0f8ff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-top: 8px;
+    }
+
+    .task-item.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .task-controls button {
+      margin-left: 5px;
+      padding: 5px 8px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button.complete-btn { background-color: #2a52be; color: white; }
+    button.edit-btn { background-color: #ffc107; color: black; }
+    button.delete-btn { background-color: #e74c3c; color: white; }
+
+    @media (max-width: 600px) {
+      .list-name input { width: 100%; margin-bottom: 10px; }
+      .list-name button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📚To-Do List</h1>
+
+    <!-- List Name Input -->
+    <div class="list-name">
+      <input type="text" id="listName" placeholder="Enter List Name (e.g., School)" />
+      <button onclick="createList()">Create List</button>
+    </div>
+
+    <!-- Lists Container -->
+    <div id="listsContainer" class="lists-container"></div>
+  </div>
+
+  <script>
+    let lists = [];
+
+    function createList() {
+      const nameInput = document.getElementById("listName");
+      const name = nameInput.value.trim();
+      if (!name) return alert("Please enter a list name!");
+
+      const listId = `list-${Date.now()}`;
+      lists.push({ id: listId, name: name, tasks: [] });
+      renderLists();
+
+      nameInput.value = "";
+    }
+
+    function renderLists() {
+      const container = document.getElementById("listsContainer");
+      container.innerHTML = "";
+
+      lists.forEach((list) => {
+        const listDiv = document.createElement("div");
+        listDiv.className = "task-list";
+        listDiv.id = list.id;
+
+        listDiv.innerHTML = `
+          <h2>${list.name}</h2>
+          <div class="task-form">
+            <input type="text" placeholder="Task Description" id="taskDesc-${list.id}" />
+            <input type="datetime-local" id="taskTime-${list.id}" />
+            <button onclick="addTask('${list.id}')">Add Task</button>
+          </div>
+          <div class="tasks-container"></div>
+        `;
+        container.appendChild(listDiv);
+
+        renderTasks(list.id);
+      });
+    }
+
+    function addTask(listId) {
+      const descInput = document.getElementById(`taskDesc-${listId}`);
+      const timeInput = document.getElementById(`taskTime-${listId}`);
+      const description = descInput.value.trim();
+      const due = timeInput.value;
+
+      if (!description || !due) return alert("Please fill both fields!");
+
+      const task = {
+        id: `task-${Date.now()}`,
+        description: description,
+        due: due,
+        completed: false,
+      };
+
+      const list = lists.find((l) => l.id === listId);
+      list.tasks.push(task);
+      renderTasks(listId);
+
+      descInput.value = "";
+      timeInput.value = "";
+    }
+
+    function renderTasks(listId) {
+      const list = lists.find((l) => l.id === listId);
+      const container = document.querySelector(`#${listId} .tasks-container`);
+      container.innerHTML = "";
+
+      list.tasks.forEach((task) => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = `task-item ${task.completed ? "completed" : ""}`;
+        taskDiv.innerHTML = `
+          <div>
+            <strong>${task.description}</strong><br/>
+            <small>Due: ${new Date(task.due).toLocaleString()}</small>
+          </div>
+          <div class="task-controls">
+            <button class="complete-btn" onclick="toggleComplete('${listId}', '${task.id}')">${task.completed ? "Undo" : "Complete"}</button>
+            <button class="edit-btn" onclick="editTask('${listId}', '${task.id}')">Edit</button>
+            <button class="delete-btn" onclick="deleteTask('${listId}', '${task.id}')">Delete</button>
+          </div>
+        `;
+        container.appendChild(taskDiv);
+      });
+    }
+
+    function toggleComplete(listId, taskId) {
+      const list = lists.find((l) => l.id === listId);
+      const task = list.tasks.find((t) => t.id === taskId);
+      task.completed = !task.completed;
+      renderTasks(listId);
+    }
+
+    function editTask(listId, taskId) {
+      const list = lists.find((l) => l.id === listId);
+      const task = list.tasks.find((t) => t.id === taskId);
+      
+      const newDesc = prompt("Edit Task Description:", task.description);
+      const newDue = prompt("Edit Due Date & Time (YYYY-MM-DDTHH:MM):", task.due);
+
+      if (newDesc !== null && newDue !== null) {
+        task.description = newDesc.trim();
+        task.due = newDue;
+        renderTasks(listId);
+      }
+    }
+
+    function deleteTask(listId, taskId) {
+      const list = lists.find((l) => l.id === listId);
+      list.tasks = list.tasks.filter((t) => t.id !== taskId);
+      renderTasks(listId);
+    }
+  </script>
+</body>
+</html>
